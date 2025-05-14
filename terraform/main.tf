@@ -46,3 +46,29 @@ resource "aws_subnet" "public_subnets" {
     Terraform   = "true"
   }
 }
+
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.vpc.id
+
+  tags = {
+    Name        = "${var.vpc_name}-igw"
+    Environment = "demo"
+    Terraform   = "true"
+  }
+}
+
+resource "aws_route_table" "public_route_table" {
+  vpc_id = aws_vpc.vpc.id
+
+  route {
+    cidr_block = "0.o.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+    # nat_gateway_id = null
+  }
+  tags = {
+    Name        = "${var.vpc_name}-public-rt"
+    Environment = "demo"
+    Terraform   = "true"
+  }
+
+  
