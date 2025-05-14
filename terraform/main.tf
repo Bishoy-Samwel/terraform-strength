@@ -57,18 +57,40 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
+resource "aws_eip" "nat_eip" {
+  vpc        = true
+  depends_on = [aws_internet_gateway.igw]
+  tags = {
+    Name        = "${var.vpc_name}-nat-eip"
+    Environment = "demo"
+    Terraform   = "true"
+  }
+}
+
+resource "aws_nat_gateway" "nat_gw" {
+  depends_on    = [aws_subnet.public_subnets]
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.public_subnets["public_subnet-1"].id
+
+  tags = {
+    Name        = "${var.vpc_name}-nat-gw"
+    Environment = "demo"
+    Terraform   = "true"
+  }
+}
+
 resource "aws_route_table" "public_route_table" {
   vpc_id = aws_vpc.vpc.id
 
   route {
-    cidr_block = "0.o.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
-    # nat_gateway_id = null
+    cidr_block     = "0.o.0.0/0"
+    gateway_id     = aws_internet_gateway.igw.id
+    nat_gateway_id = aws_nat_gateway.nat_gw.id
   }
   tags = {
     Name        = "${var.vpc_name}-public-rt"
     Environment = "demo"
     Terraform   = "true"
   }
+}
 
-  
