@@ -58,7 +58,7 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_eip" "nat_eip" {
-  vpc        = true
+  vpc     = true
   depends_on = [aws_internet_gateway.igw]
   tags = {
     Name        = "${var.vpc_name}-nat-eip"
@@ -83,9 +83,9 @@ resource "aws_route_table" "public_route_table" {
   vpc_id = aws_vpc.vpc.id
 
   route {
-    cidr_block     = "0.o.0.0/0"
-    gateway_id     = aws_internet_gateway.igw.id
-    nat_gateway_id = aws_nat_gateway.nat_gw.id
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+    # nat_gateway_id = aws_nat_gateway.nat_gw.id
   }
   tags = {
     Name        = "${var.vpc_name}-public-rt"
@@ -94,3 +94,32 @@ resource "aws_route_table" "public_route_table" {
   }
 }
 
+resource "aws_s3_bucket" "s3_bucket" {
+  bucket = "${var.vpc_name}-bucket-${random_string.random_string.result}"
+  # acl    = "private"
+
+  tags = {
+    Name        = "${var.vpc_name}-bucket"
+    Environment = "demo"
+    Terraform   = "true"
+  }
+}
+
+
+
+resource "aws_s3_bucket_ownership_controls" "ownership" {
+  bucket = aws_s3_bucket.s3_bucket.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced" 
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "public_access" {
+  bucket = aws_s3_bucket.s3_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
